@@ -15,12 +15,11 @@ library(ggplot2)
 library(dplyr)
 library(tidyverse)
 
-
+#Setting directory and location of executable.
 setwd("C:/Users/Erik/Desktop/GenomeDK/Rstudio")
 blastn = "C:/Program Files/NCBI/blast-2.8.1+/bin"
 
-
-manual_input = "C:/Users/Erik/Desktop/GenomeDK/Resistance_Genes/BlaZ.fasta"
+#Setting various values the blast shall return, as well as the restrictions on blast.
 evalue = 1
 format = ' "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send sseq evalue bitscore qcovs" ' 
 identity_percent = 20
@@ -39,11 +38,11 @@ colnames <- c("qseqid",
               "bitscore",
               "qcovs")
 
+#Location of genes on my local computer
 gene_list = list.files(path = "C:/Users/Erik/Desktop/GenomeDK/Resistance_Genes/", full.names = TRUE)
-for (file in input_list){
-  print(file)
-  print(basename(file))
-}
+
+
+#Function, used to blast.
 blast_func <- function(input, db) {
   blast_out <- system2(command = "blastn", 
                      args = c("-db", db, 
@@ -58,10 +57,12 @@ blast_func <- function(input, db) {
               sep = "\t",
               convert = TRUE)
 }
-result <- blast_func(manual_input, blast_db)
 
+#Table created to recieve output.
 output_tib <- tibble(Contig = character(), Gene = character(), pident = character(), qcov = character())
 
+#Function, used to iterate through all genes found.
+#It will return location of gene, name of gene, identity of gene and coverage of query if match is good enough
 genome_search <- function(blast_db){
 for (input in gene_list){
   temp_blast <- blast_func(input, blast_db)
@@ -81,13 +82,14 @@ genome_results <- genome_search(blast_db)
 print(genome_results)
 
 library(readxl)
+#Code used for Correlation testing.
 epi2me_results <- read_excel("Results_Epi2Me_comp.xlsx")
 sum(epi2me_results$`Pident in assembly` > 0)
 sum(epi2me_results$`Location in assembly` == "Not found")
 
 independence_testing <- read_excel("Independence.xlsx")
 cor.test(independence_testing$`Nanodrop 280/260`, y=independence_testing$`ng/ul`, method = "pearson")
-
+#Code used to categorize the genes based on their Epi2Me statistic and Genome assembly accuracy.
 resistance_testing <- read_excel("Resistance_stats.xlsx")
 cor.test(resistance_testing$`Accuracy in Epi2Me...7`, y=resistance_testing$`Pident*coverage`)
 cor.test(resistance_testing$Statistic, y=resistance_testing$`Pident*coverage`)
